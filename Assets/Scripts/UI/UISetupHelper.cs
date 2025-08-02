@@ -1,396 +1,349 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 /// <summary>
 /// UI设置助手
-/// 用于在编辑器中快速创建和设置完整的UI界面
+/// 用于快速搭建Menu场景的UI结构
 /// </summary>
 public class UISetupHelper : MonoBehaviour
 {
-    [Header("UI创建选项")]
-    public bool createMainMenuUI = true;    // 是否创建主菜单UI
-    public bool createSettingsUI = true;    // 是否创建设置UI
-    public bool createCreditsUI = true;     // 是否创建制作人员UI
-    public bool createLoadingUI = true;     // 是否创建加载UI
+    [Header("预制体引用")]
+    public GameObject panelPrefab;      // 面板预制体
+    public GameObject buttonPrefab;     // 按钮预制体
+    public GameObject textPrefab;       // 文本预制体
+    public GameObject sliderPrefab;     // 滑块预制体
+    public GameObject dropdownPrefab;   // 下拉菜单预制体
+    public GameObject togglePrefab;     // 开关预制体
     
-    [Header("UI引用")]
-    public Canvas mainCanvas;               // 主画布
-    public MainMenuManager mainMenuManager; // 主菜单管理器
-    public SettingsManager settingsManager; // 设置管理器
-    public CreditsManager creditsManager;   // 制作人员管理器
-    public UIManager uiManager;             // UI管理器
-    
-    #if UNITY_EDITOR
-    /// <summary>
-    /// 设置完整UI系统
-    /// 右键菜单选项，用于快速创建完整的UI界面
-    /// </summary>
-    [ContextMenu("Setup Complete UI")]
-    public void SetupCompleteUI()
-    {
-        if (createMainMenuUI) CreateMainMenuUI();    // 创建主菜单UI
-        if (createSettingsUI) CreateSettingsUI();    // 创建设置UI
-        if (createCreditsUI) CreateCreditsUI();      // 创建制作人员UI
-        if (createLoadingUI) CreateLoadingUI();      // 创建加载UI
-        
-        SetupScripts();      // 设置脚本组件
-        SetupReferences();   // 设置引用关系
-    }
+    [Header("设置")]
+    public Color buttonNormalColor = new Color(0.2f, 0.2f, 0.2f, 1f);
+    public Color buttonHoverColor = new Color(0.3f, 0.3f, 0.3f, 1f);
+    public Color buttonPressedColor = new Color(0.1f, 0.1f, 0.1f, 1f);
     
     /// <summary>
-    /// 创建主菜单UI
-    /// 创建主菜单面板、背景、标题和按钮
+    /// 创建主菜单面板
     /// </summary>
-    private void CreateMainMenuUI()
+    public GameObject CreateMainMenuPanel()
     {
-        // 如果主画布不存在，则创建
-        if (mainCanvas == null)
-        {
-            GameObject canvasObj = new GameObject("Canvas");
-            mainCanvas = canvasObj.AddComponent<Canvas>();
-            mainCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasObj.AddComponent<CanvasScaler>();
-            canvasObj.AddComponent<GraphicRaycaster>();
-        }
-        
-        // 创建主菜单面板
-        GameObject mainMenuPanel = CreatePanel("MainMenuPanel", mainCanvas.transform);
-        
-        // 创建背景图片
-        GameObject backgroundImage = CreateImage("BackgroundImage", mainMenuPanel.transform);
-        RectTransform bgRect = backgroundImage.GetComponent<RectTransform>();
-        bgRect.anchorMin = Vector2.zero;
-        bgRect.anchorMax = Vector2.one;
-        bgRect.offsetMin = Vector2.zero;
-        bgRect.offsetMax = Vector2.zero;
+        GameObject panel = CreatePanel("MainMenuPanel");
+        panel.transform.SetParent(transform);
         
         // 创建标题
-        GameObject titleText = CreateText("TitleText", mainMenuPanel.transform, "LOOOP");
-        RectTransform titleRect = titleText.GetComponent<RectTransform>();
-        titleRect.anchorMin = new Vector2(0.5f, 0.8f);
-        titleRect.anchorMax = new Vector2(0.5f, 0.9f);
-        titleRect.anchoredPosition = Vector2.zero;
-        titleRect.sizeDelta = new Vector2(400, 100);
+        GameObject title = CreateText("Title", "LOOOP", 48, TextAnchor.MiddleCenter);
+        title.transform.SetParent(panel.transform);
+        title.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 200);
+        
+        // 创建按钮容器
+        GameObject buttonContainer = new GameObject("ButtonContainer");
+        buttonContainer.transform.SetParent(panel.transform);
+        buttonContainer.AddComponent<VerticalLayoutGroup>();
+        buttonContainer.GetComponent<VerticalLayoutGroup>().spacing = 20;
+        buttonContainer.GetComponent<VerticalLayoutGroup>().childControlHeight = false;
+        buttonContainer.GetComponent<VerticalLayoutGroup>().childControlWidth = false;
+        buttonContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
         
         // 创建按钮
-        CreateButton("StartGameButton", mainMenuPanel.transform, "开始游戏", new Vector2(0.5f, 0.6f));
-        CreateButton("ContinueGameButton", mainMenuPanel.transform, "继续游戏", new Vector2(0.5f, 0.5f));
-        CreateButton("SettingsButton", mainMenuPanel.transform, "设置", new Vector2(0.5f, 0.4f));
-        CreateButton("CreditsButton", mainMenuPanel.transform, "制作人员", new Vector2(0.5f, 0.3f));
-        CreateButton("ExitButton", mainMenuPanel.transform, "退出", new Vector2(0.5f, 0.2f));
-    }
-    
-    private void CreateSettingsUI()
-    {
-        GameObject settingsPanel = CreatePanel("SettingsPanel", mainCanvas.transform);
-        settingsPanel.SetActive(false);
+        CreateButton("StartGameButton", "开始游戏", buttonContainer.transform);
+        CreateButton("ContinueGameButton", "继续游戏", buttonContainer.transform);
+        CreateButton("SettingsButton", "设置", buttonContainer.transform);
+        CreateButton("CreditsButton", "制作人员", buttonContainer.transform);
+        CreateButton("ExitButton", "退出游戏", buttonContainer.transform);
         
-        // Create Title
-        GameObject titleText = CreateText("TitleText", settingsPanel.transform, "设置");
-        RectTransform titleRect = titleText.GetComponent<RectTransform>();
-        titleRect.anchorMin = new Vector2(0.5f, 0.9f);
-        titleRect.anchorMax = new Vector2(0.5f, 0.95f);
-        titleRect.anchoredPosition = Vector2.zero;
-        titleRect.sizeDelta = new Vector2(200, 50);
-        
-        // Create Volume Sliders
-        CreateSlider("MasterVolumeSlider", settingsPanel.transform, "主音量", new Vector2(0.5f, 0.8f));
-        CreateSlider("MusicVolumeSlider", settingsPanel.transform, "音乐音量", new Vector2(0.5f, 0.7f));
-        CreateSlider("SFXVolumeSlider", settingsPanel.transform, "音效音量", new Vector2(0.5f, 0.6f));
-        
-        // Create Resolution Dropdown
-        CreateDropdown("ResolutionDropdown", settingsPanel.transform, "分辨率", new Vector2(0.5f, 0.5f));
-        
-        // Create Fullscreen Toggle
-        CreateToggle("FullscreenToggle", settingsPanel.transform, "全屏", new Vector2(0.5f, 0.4f));
-        
-        // Create Buttons
-        CreateButton("SaveButton", settingsPanel.transform, "保存", new Vector2(0.4f, 0.2f));
-        CreateButton("BackButton", settingsPanel.transform, "返回", new Vector2(0.6f, 0.2f));
-    }
-    
-    private void CreateCreditsUI()
-    {
-        GameObject creditsPanel = CreatePanel("CreditsPanel", mainCanvas.transform);
-        creditsPanel.SetActive(false);
-        
-        //创建标题
-        GameObject titleText = CreateText("TitleText", creditsPanel.transform, "制作人员");
-        RectTransform titleRect = titleText.GetComponent<RectTransform>();
-        titleRect.anchorMin = new Vector2(0.5f, 0.9f);
-        titleRect.anchorMax = new Vector2(0.5f, 0.95f);
-        titleRect.anchoredPosition = Vector2.zero;
-        titleRect.sizeDelta = new Vector2(200, 50);
-        
-        //创建制作人员滚动视图
-        GameObject scrollView = CreateScrollView("CreditsScrollView", creditsPanel.transform, new Vector2(0.5f, 0.5f));
-        
-        //创建返回按钮
-        CreateButton("BackButton", creditsPanel.transform, "返回", new Vector2(0.5f, 0.1f));
-    }
-    
-    private void CreateLoadingUI()
-    {
-        GameObject loadingPanel = CreatePanel("LoadingPanel", mainCanvas.transform);
-        loadingPanel.SetActive(false);
-        
-        //创建进度条
-        CreateProgressBar("ProgressBar", loadingPanel.transform, new Vector2(0.5f, 0.5f));
-        
-        //创建进度文本
-        GameObject progressText = CreateText("ProgressText", loadingPanel.transform, "0%");
-        RectTransform progressRect = progressText.GetComponent<RectTransform>();
-        progressRect.anchorMin = new Vector2(0.5f, 0.4f);
-        progressRect.anchorMax = new Vector2(0.5f, 0.45f);
-        progressRect.anchoredPosition = Vector2.zero;
-        progressRect.sizeDelta = new Vector2(200, 50);
-        
-        //创建加载文本
-        GameObject loadingText = CreateText("LoadingText", loadingPanel.transform, "Loading...");
-        RectTransform loadingRect = loadingText.GetComponent<RectTransform>();
-        loadingRect.anchorMin = new Vector2(0.5f, 0.6f);
-        loadingRect.anchorMax = new Vector2(0.5f, 0.65f);
-        loadingRect.anchoredPosition = Vector2.zero;
-        loadingRect.sizeDelta = new Vector2(200, 50);
-    }
-    
-    private GameObject CreatePanel(string name, Transform parent)
-    {
-        GameObject panel = new GameObject(name);
-        panel.transform.SetParent(parent, false);
-        RectTransform rect = panel.AddComponent<RectTransform>();
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
         return panel;
     }
     
-    private GameObject CreateImage(string name, Transform parent)
+    /// <summary>
+    /// 创建设置面板
+    /// </summary>
+    public GameObject CreateSettingsPanel()
     {
-        GameObject imageObj = new GameObject(name);
-        imageObj.transform.SetParent(parent, false);
-        Image image = imageObj.AddComponent<Image>();
-        image.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
-        return imageObj;
+        GameObject panel = CreatePanel("SettingsPanel");
+        panel.transform.SetParent(transform);
+        
+        // 创建标题
+        GameObject title = CreateText("SettingsTitle", "设置", 36, TextAnchor.MiddleCenter);
+        title.transform.SetParent(panel.transform);
+        title.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 250);
+        
+        // 创建设置容器
+        GameObject settingsContainer = new GameObject("SettingsContainer");
+        settingsContainer.transform.SetParent(panel.transform);
+        settingsContainer.AddComponent<VerticalLayoutGroup>();
+        settingsContainer.GetComponent<VerticalLayoutGroup>().spacing = 30;
+        settingsContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 50);
+        
+        // 音频设置
+        CreateAudioSettings(settingsContainer.transform);
+        
+        // 图形设置
+        CreateGraphicsSettings(settingsContainer.transform);
+        
+        // 按钮
+        GameObject buttonContainer = new GameObject("ButtonContainer");
+        buttonContainer.transform.SetParent(panel.transform);
+        buttonContainer.AddComponent<HorizontalLayoutGroup>();
+        buttonContainer.GetComponent<HorizontalLayoutGroup>().spacing = 20;
+        buttonContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -200);
+        
+        CreateButton("SaveButton", "保存", buttonContainer.transform);
+        CreateButton("BackButton", "返回", buttonContainer.transform);
+        
+        return panel;
     }
     
-    private GameObject CreateText(string name, Transform parent, string text)
+    /// <summary>
+    /// 创建制作人员面板
+    /// </summary>
+    public GameObject CreateCreditsPanel()
+    {
+        GameObject panel = CreatePanel("CreditsPanel");
+        panel.transform.SetParent(transform);
+        
+        // 创建标题
+        GameObject title = CreateText("CreditsTitle", "制作人员", 36, TextAnchor.MiddleCenter);
+        title.transform.SetParent(panel.transform);
+        title.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 250);
+        
+        // 创建滚动视图
+        GameObject scrollView = CreateScrollView("CreditsScrollView");
+        scrollView.transform.SetParent(panel.transform);
+        scrollView.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+        scrollView.GetComponent<RectTransform>().sizeDelta = new Vector2(600, 400);
+        
+        // 创建返回按钮
+        CreateButton("BackButton", "返回", panel.transform);
+        GameObject backButton = panel.transform.Find("BackButton").gameObject;
+        backButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -250);
+        
+        return panel;
+    }
+    
+    /// <summary>
+    /// 创建面板
+    /// </summary>
+    private GameObject CreatePanel(string name)
+    {
+        GameObject panel = new GameObject(name);
+        panel.AddComponent<RectTransform>();
+        panel.AddComponent<CanvasRenderer>();
+        panel.AddComponent<Image>();
+        panel.GetComponent<Image>().color = new Color(0, 0, 0, 0.8f);
+        return panel;
+    }
+    
+    /// <summary>
+    /// 创建按钮
+    /// </summary>
+    private GameObject CreateButton(string name, string text, Transform parent)
+    {
+        GameObject button = new GameObject(name);
+        button.transform.SetParent(parent);
+        
+        // 添加按钮组件
+        button.AddComponent<RectTransform>();
+        button.AddComponent<Image>();
+        button.AddComponent<Button>();
+        
+        // 设置按钮颜色
+        ColorBlock colors = button.GetComponent<Button>().colors;
+        colors.normalColor = buttonNormalColor;
+        colors.highlightedColor = buttonHoverColor;
+        colors.pressedColor = buttonPressedColor;
+        button.GetComponent<Button>().colors = colors;
+        
+        // 设置按钮大小
+        button.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 50);
+        
+        // 创建按钮文本
+        GameObject buttonText = CreateText(name + "Text", text, 24, TextAnchor.MiddleCenter);
+        buttonText.transform.SetParent(button.transform);
+        buttonText.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+        
+        return button;
+    }
+    
+    /// <summary>
+    /// 创建文本
+    /// </summary>
+    private GameObject CreateText(string name, string text, int fontSize, TextAnchor alignment)
     {
         GameObject textObj = new GameObject(name);
-        textObj.transform.SetParent(parent, false);
-        Text textComponent = textObj.AddComponent<Text>();
+        textObj.AddComponent<RectTransform>();
+        textObj.AddComponent<CanvasRenderer>();
+        textObj.AddComponent<Text>();
+        
+        Text textComponent = textObj.GetComponent<Text>();
         textComponent.text = text;
-        textComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        textComponent.fontSize = 24;
+        textComponent.fontSize = fontSize;
+        textComponent.alignment = alignment;
         textComponent.color = Color.white;
-        textComponent.alignment = TextAnchor.MiddleCenter;
+        textComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        
         return textObj;
     }
     
-    private GameObject CreateButton(string name, Transform parent, string text, Vector2 anchorPosition)
+    /// <summary>
+    /// 创建滚动视图
+    /// </summary>
+    private GameObject CreateScrollView(string name)
     {
-        GameObject buttonObj = new GameObject(name);
-        buttonObj.transform.SetParent(parent, false);
+        GameObject scrollView = new GameObject(name);
+        scrollView.AddComponent<RectTransform>();
+        scrollView.AddComponent<ScrollRect>();
+        scrollView.AddComponent<Image>();
+        scrollView.GetComponent<Image>().color = new Color(0, 0, 0, 0.5f);
         
-        Image buttonImage = buttonObj.AddComponent<Image>();
-        buttonImage.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+        // 创建Viewport
+        GameObject viewport = new GameObject("Viewport");
+        viewport.transform.SetParent(scrollView.transform);
+        viewport.AddComponent<RectTransform>();
+        viewport.AddComponent<Image>();
+        viewport.AddComponent<Mask>();
+        viewport.GetComponent<Image>().color = new Color(0, 0, 0, 0.3f);
         
-        Button button = buttonObj.AddComponent<Button>();
+        // 创建Content
+        GameObject content = new GameObject("Content");
+        content.transform.SetParent(viewport.transform);
+        content.AddComponent<RectTransform>();
+        content.AddComponent<VerticalLayoutGroup>();
+        content.GetComponent<VerticalLayoutGroup>().spacing = 10;
+        content.GetComponent<VerticalLayoutGroup>().padding = new RectOffset(20, 20, 20, 20);
         
-        GameObject textObj = CreateText("Text", buttonObj.transform, text);
-        RectTransform textRect = textObj.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = Vector2.zero;
-        textRect.offsetMax = Vector2.zero;
+        // 设置ScrollRect
+        ScrollRect scrollRect = scrollView.GetComponent<ScrollRect>();
+        scrollRect.viewport = viewport.GetComponent<RectTransform>();
+        scrollRect.content = content.GetComponent<RectTransform>();
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
         
-        RectTransform buttonRect = buttonObj.GetComponent<RectTransform>();
-        buttonRect.anchorMin = anchorPosition - new Vector2(0.1f, 0.025f);
-        buttonRect.anchorMax = anchorPosition + new Vector2(0.1f, 0.025f);
-        buttonRect.anchoredPosition = Vector2.zero;
+        // 添加制作人员文本
+        GameObject creditsText = CreateText("CreditsText", GetCreditsContent(), 18, TextAnchor.UpperLeft);
+        creditsText.transform.SetParent(content.transform);
+        creditsText.GetComponent<RectTransform>().sizeDelta = new Vector2(500, 800);
         
-        return buttonObj;
+        return scrollView;
     }
     
-    private GameObject CreateSlider(string name, Transform parent, string label, Vector2 anchorPosition)
+    /// <summary>
+    /// 创建音频设置
+    /// </summary>
+    private void CreateAudioSettings(Transform parent)
     {
-        GameObject sliderObj = new GameObject(name);
-        sliderObj.transform.SetParent(parent, false);
-        
-        Slider slider = sliderObj.AddComponent<Slider>();
-        Image sliderImage = sliderObj.AddComponent<Image>();
-        sliderImage.color = new Color(0.3f, 0.3f, 0.3f, 1f);
-        
-        //创建标签
-        GameObject labelObj = CreateText("Label", sliderObj.transform, label);
-        RectTransform labelRect = labelObj.GetComponent<RectTransform>();
-        labelRect.anchorMin = new Vector2(0, 0.5f);
-        labelRect.anchorMax = new Vector2(0.3f, 0.5f);
-        labelRect.anchoredPosition = Vector2.zero;
-        labelRect.sizeDelta = new Vector2(100, 30);
-        
-        RectTransform sliderRect = sliderObj.GetComponent<RectTransform>();
-        sliderRect.anchorMin = anchorPosition - new Vector2(0.15f, 0.025f);
-        sliderRect.anchorMax = anchorPosition + new Vector2(0.15f, 0.025f);
-        sliderRect.anchoredPosition = Vector2.zero;
-        
-        return sliderObj;
+        // 主音量
+        CreateSliderSetting("MasterVolume", "主音量", parent);
+        // 音乐音量
+        CreateSliderSetting("MusicVolume", "音乐音量", parent);
+        // 音效音量
+        CreateSliderSetting("SFXVolume", "音效音量", parent);
     }
     
-    private GameObject CreateDropdown(string name, Transform parent, string label, Vector2 anchorPosition)
+    /// <summary>
+    /// 创建图形设置
+    /// </summary>
+    private void CreateGraphicsSettings(Transform parent)
     {
-        GameObject dropdownObj = new GameObject(name);
-        dropdownObj.transform.SetParent(parent, false);
-        
-        Dropdown dropdown = dropdownObj.AddComponent<Dropdown>();
-        Image dropdownImage = dropdownObj.AddComponent<Image>();
-        dropdownImage.color = new Color(0.3f, 0.3f, 0.3f, 1f);
-        
-        //创建标签
-        GameObject labelObj = CreateText("Label", dropdownObj.transform, label);
-        RectTransform labelRect = labelObj.GetComponent<RectTransform>();
-        labelRect.anchorMin = new Vector2(0, 0.5f);
-        labelRect.anchorMax = new Vector2(0.3f, 0.5f);
-        labelRect.anchoredPosition = Vector2.zero;
-        labelRect.sizeDelta = new Vector2(100, 30);
-        
-        RectTransform dropdownRect = dropdownObj.GetComponent<RectTransform>();
-        dropdownRect.anchorMin = anchorPosition - new Vector2(0.15f, 0.025f);
-        dropdownRect.anchorMax = anchorPosition + new Vector2(0.15f, 0.025f);
-        dropdownRect.anchoredPosition = Vector2.zero;
-        
-        return dropdownObj;
+        // 分辨率
+        CreateDropdownSetting("Resolution", "分辨率", parent);
+        // 全屏
+        CreateToggleSetting("Fullscreen", "全屏", parent);
     }
     
-    private GameObject CreateToggle(string name, Transform parent, string label, Vector2 anchorPosition)
+    /// <summary>
+    /// 创建滑块设置
+    /// </summary>
+    private void CreateSliderSetting(string name, string label, Transform parent)
     {
-        GameObject toggleObj = new GameObject(name);
-        toggleObj.transform.SetParent(parent, false);
+        GameObject container = new GameObject(name + "Container");
+        container.transform.SetParent(parent);
+        container.AddComponent<HorizontalLayoutGroup>();
+        container.GetComponent<HorizontalLayoutGroup>().spacing = 20;
         
-        Toggle toggle = toggleObj.AddComponent<Toggle>();
-        Image toggleImage = toggleObj.AddComponent<Image>();
-        toggleImage.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+        // 标签
+        GameObject labelObj = CreateText(name + "Label", label, 20, TextAnchor.MiddleLeft);
+        labelObj.transform.SetParent(container.transform);
+        labelObj.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 30);
         
-        //创建标签
-        GameObject labelObj = CreateText("Label", toggleObj.transform, label);
-        RectTransform labelRect = labelObj.GetComponent<RectTransform>();
-        labelRect.anchorMin = new Vector2(0.1f, 0.5f);
-        labelRect.anchorMax = new Vector2(0.9f, 0.5f);
-        labelRect.anchoredPosition = Vector2.zero;
-        labelRect.sizeDelta = new Vector2(0, 30);
-        
-        RectTransform toggleRect = toggleObj.GetComponent<RectTransform>();
-        toggleRect.anchorMin = anchorPosition - new Vector2(0.15f, 0.025f);
-        toggleRect.anchorMax = anchorPosition + new Vector2(0.15f, 0.025f);
-        toggleRect.anchoredPosition = Vector2.zero;
-        
-        return toggleObj;
+        // 滑块
+        GameObject slider = new GameObject(name + "Slider");
+        slider.transform.SetParent(container.transform);
+        slider.AddComponent<RectTransform>();
+        slider.AddComponent<Slider>();
+        slider.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 30);
     }
     
-    private GameObject CreateScrollView(string name, Transform parent, Vector2 anchorPosition)
+    /// <summary>
+    /// 创建下拉菜单设置
+    /// </summary>
+    private void CreateDropdownSetting(string name, string label, Transform parent)
     {
-        GameObject scrollViewObj = new GameObject(name);
-        scrollViewObj.transform.SetParent(parent, false);
+        GameObject container = new GameObject(name + "Container");
+        container.transform.SetParent(parent);
+        container.AddComponent<HorizontalLayoutGroup>();
+        container.GetComponent<HorizontalLayoutGroup>().spacing = 20;
         
-        ScrollRect scrollRect = scrollViewObj.AddComponent<ScrollRect>();
-        Image scrollImage = scrollViewObj.AddComponent<Image>();
-        scrollImage.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+        // 标签
+        GameObject labelObj = CreateText(name + "Label", label, 20, TextAnchor.MiddleLeft);
+        labelObj.transform.SetParent(container.transform);
+        labelObj.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 30);
         
-        //创建内容
-        GameObject contentObj = new GameObject("Content");
-        contentObj.transform.SetParent(scrollViewObj.transform, false);
-        RectTransform contentRect = contentObj.AddComponent<RectTransform>();
-        contentRect.anchorMin = Vector2.zero;
-        contentRect.anchorMax = Vector2.one;
-        contentRect.offsetMin = Vector2.zero;
-        contentRect.offsetMax = Vector2.zero;
-        
-        //创建制作人员文本
-        GameObject creditsText = CreateText("CreditsText", contentObj.transform, "制作人员信息将在这里显示...");
-        RectTransform creditsRect = creditsText.GetComponent<RectTransform>();
-        creditsRect.anchorMin = Vector2.zero;
-        creditsRect.anchorMax = new Vector2(1f, 1f);
-        creditsRect.offsetMin = new Vector2(20, 20);
-        creditsRect.offsetMax = new Vector2(-20, -20);
-        
-        scrollRect.content = contentRect;
-        
-        RectTransform scrollViewRect = scrollViewObj.GetComponent<RectTransform>();
-        scrollViewRect.anchorMin = anchorPosition - new Vector2(0.4f, 0.3f);
-        scrollViewRect.anchorMax = anchorPosition + new Vector2(0.4f, 0.3f);
-        scrollViewRect.anchoredPosition = Vector2.zero;
-        
-        return scrollViewObj;
+        // 下拉菜单
+        GameObject dropdown = new GameObject(name + "Dropdown");
+        dropdown.transform.SetParent(container.transform);
+        dropdown.AddComponent<RectTransform>();
+        dropdown.AddComponent<Dropdown>();
+        dropdown.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 30);
     }
     
-    private GameObject CreateProgressBar(string name, Transform parent, Vector2 anchorPosition)
+    /// <summary>
+    /// 创建开关设置
+    /// </summary>
+    private void CreateToggleSetting(string name, string label, Transform parent)
     {
-        GameObject progressBarObj = new GameObject(name);
-        progressBarObj.transform.SetParent(parent, false);
+        GameObject container = new GameObject(name + "Container");
+        container.transform.SetParent(parent);
+        container.AddComponent<HorizontalLayoutGroup>();
+        container.GetComponent<HorizontalLayoutGroup>().spacing = 20;
         
-        Slider progressSlider = progressBarObj.AddComponent<Slider>();
-        Image progressImage = progressBarObj.AddComponent<Image>();
-        progressImage.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+        // 标签
+        GameObject labelObj = CreateText(name + "Label", label, 20, TextAnchor.MiddleLeft);
+        labelObj.transform.SetParent(container.transform);
+        labelObj.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 30);
         
-        RectTransform progressRect = progressBarObj.GetComponent<RectTransform>();
-        progressRect.anchorMin = anchorPosition - new Vector2(0.3f, 0.025f);
-        progressRect.anchorMax = anchorPosition + new Vector2(0.3f, 0.025f);
-        progressRect.anchoredPosition = Vector2.zero;
-        
-        return progressBarObj;
+        // 开关
+        GameObject toggle = new GameObject(name + "Toggle");
+        toggle.transform.SetParent(container.transform);
+        toggle.AddComponent<RectTransform>();
+        toggle.AddComponent<Toggle>();
+        toggle.GetComponent<RectTransform>().sizeDelta = new Vector2(30, 30);
     }
     
-    private void SetupScripts()
+    /// <summary>
+    /// 获取制作人员内容
+    /// </summary>
+    private string GetCreditsContent()
     {
-        if (mainMenuManager == null)
-        {
-            mainMenuManager = mainCanvas.gameObject.AddComponent<MainMenuManager>();
-        }
-        
-        if (uiManager == null)
-        {
-            uiManager = mainCanvas.gameObject.AddComponent<UIManager>();
-        }
-        
-        GameObject settingsPanel = mainCanvas.transform.Find("SettingsPanel")?.gameObject;
-        if (settingsPanel != null && settingsManager == null)
-        {
-            settingsManager = settingsPanel.AddComponent<SettingsManager>();
-        }
-        
-        GameObject creditsPanel = mainCanvas.transform.Find("CreditsPanel")?.gameObject;
-        if (creditsPanel != null && creditsManager == null)
-        {
-            creditsManager = creditsPanel.AddComponent<CreditsManager>();
-        }
+        return @"LOOOP Game Credits
+
+Game Development Team:
+- Lead Developer: [Your Name]
+- Game Designer: [Designer Name]
+- Artist: [Artist Name]
+- Sound Designer: [Sound Designer Name]
+
+Special Thanks:
+- Unity Technologies
+- All playtesters and supporters
+- Friends and family for their patience
+
+Technical Credits:
+- Engine: Unity 2022.3 LTS
+- Programming Language: C#
+- Audio: Unity Audio System
+- Graphics: Unity URP
+
+© 2025 LOOOP Development Team
+All rights reserved.
+
+Thank you for playing!";
     }
-    
-    private void SetupReferences()
-    {
-        if (mainMenuManager != null)
-        {
-            mainMenuManager.mainMenuPanel = mainCanvas.transform.Find("MainMenuPanel")?.gameObject;
-            mainMenuManager.settingsPanel = mainCanvas.transform.Find("SettingsPanel")?.gameObject;
-            mainMenuManager.creditsPanel = mainCanvas.transform.Find("CreditsPanel")?.gameObject;
-            mainMenuManager.backgroundImage = mainCanvas.transform.Find("MainMenuPanel/BackgroundImage")?.GetComponent<Image>();
-            
-            mainMenuManager.startGameButton = mainCanvas.transform.Find("MainMenuPanel/StartGameButton")?.GetComponent<Button>();
-            mainMenuManager.continueGameButton = mainCanvas.transform.Find("MainMenuPanel/ContinueGameButton")?.GetComponent<Button>();
-            mainMenuManager.settingsButton = mainCanvas.transform.Find("MainMenuPanel/SettingsButton")?.GetComponent<Button>();
-            mainMenuManager.creditsButton = mainCanvas.transform.Find("MainMenuPanel/CreditsButton")?.GetComponent<Button>();
-            mainMenuManager.exitButton = mainCanvas.transform.Find("MainMenuPanel/ExitButton")?.GetComponent<Button>();
-        }
-        
-        if (uiManager != null)
-        {
-            uiManager.mainCanvas = mainCanvas;
-            uiManager.canvasScaler = mainCanvas.GetComponent<CanvasScaler>();
-        }
-    }
-    #endif
 } 
