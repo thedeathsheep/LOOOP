@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Cinemachine Camera
+  - Screen
+  - Entity
+  - Spike
+  - Moving Platform
+  - Winged Strawberry
+  - Wall
+  - Collapsing Tile
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - Foreground
+  - Water
+  - UI
+  - Midground
+  - Background
+  - Platform
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
