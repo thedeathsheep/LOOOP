@@ -47,7 +47,14 @@ public class StopObject : MonoBehaviour
                 timer = 0; // 重置计时器
                 stopped = false; // 停止停止状态
 
-                if (upperTransition && transitionCamera.activeInHierarchy && deathResp.dead == false) // 如果是向上转换且摄像机激活且玩家未死亡
+                // 检查组件是否为空
+                if (rb == null || playerMovement == null || deathResp == null)
+                {
+                    Debug.LogWarning("StopObject: 缺少必要的组件，无法恢复玩家状态");
+                    return;
+                }
+
+                if (upperTransition && transitionCamera != null && transitionCamera.activeInHierarchy && deathResp.dead == false) // 如果是向上转换且摄像机激活且玩家未死亡
                 {
                     storedVelocity = new Vector2(0f, 11f); // 设置向上的速度
                     playerMovement.ResetDashAndGrab(); // 重置冲刺状态
@@ -70,7 +77,10 @@ public class StopObject : MonoBehaviour
                 }
 
                 // 将最近的重生点设置为新的重生点
-                deathResp.respawnPosition = deathResp.Nearest(spawnpointsInCamera.ToArray()); // 找到最近的重生点
+                if (spawnpointsInCamera.Count > 0)
+                {
+                    deathResp.respawnPosition = deathResp.Nearest(spawnpointsInCamera.ToArray()); // 找到最近的重生点
+                }
             }
         }
     }
@@ -83,6 +93,30 @@ public class StopObject : MonoBehaviour
     /// <param name="camera">转换摄像机</param>
     public void Stop(float timeDuration, bool up, GameObject camera)
     {
+        // 检查参数是否有效
+        if (timeDuration <= 0f)
+        {
+            Debug.LogWarning("StopObject.Stop: 时间持续时间必须大于0");
+            return;
+        }
+
+        if (camera == null)
+        {
+            Debug.LogWarning("StopObject.Stop: 摄像机参数不能为空");
+            return;
+        }
+
+        // 检查必要的组件
+        if (rb == null)
+        {
+            rb = GetComponent<Rigidbody2D>();
+            if (rb == null)
+            {
+                Debug.LogError("StopObject.Stop: 无法获取 Rigidbody2D 组件");
+                return;
+            }
+        }
+
         frameDuration = (int)(timeDuration / Time.deltaTime); // 计算停止帧数
         upperTransition = up; // 设置转换方向
         transitionCamera = camera; // 设置转换摄像机
@@ -90,9 +124,9 @@ public class StopObject : MonoBehaviour
         stopped = true; // 激活停止状态
         timer = 0; // 重置计时器
 
-        storedVelocity = GetComponent<Rigidbody2D>().velocity; // 存储当前速度
-        GetComponent<Rigidbody2D>().velocity = Vector2.zero; // 停止移动
-        GetComponent<Rigidbody2D>().gravityScale = 0f; // 停止重力
+        storedVelocity = rb.velocity; // 存储当前速度
+        rb.velocity = Vector2.zero; // 停止移动
+        rb.gravityScale = 0f; // 停止重力
     }
 
     /// <summary>
@@ -102,7 +136,27 @@ public class StopObject : MonoBehaviour
     /// <returns>如果对象在摄像机内可见则返回true</returns>
     private bool VisibleInCamera(GameObject gameObject)
     {
-        if (GameObject.ReferenceEquals(gameObject.GetComponent<SpawnpointInitialization>().screen, transitionCamera.transform.parent.gameObject)) // 检查对象的屏幕是否与转换摄像机相同
+        // 检查参数是否为空
+        if (gameObject == null)
+        {
+            return false;
+        }
+
+        // 检查转换摄像机是否为空
+        if (transitionCamera == null || transitionCamera.transform == null || transitionCamera.transform.parent == null)
+        {
+            return false;
+        }
+
+        // 获取 SpawnpointInitialization 组件
+        SpawnpointInitialization spawnpointInit = gameObject.GetComponent<SpawnpointInitialization>();
+        if (spawnpointInit == null || spawnpointInit.screen == null)
+        {
+            return false;
+        }
+
+        // 检查对象的屏幕是否与转换摄像机相同
+        if (GameObject.ReferenceEquals(spawnpointInit.screen, transitionCamera.transform.parent.gameObject))
         {
             return true; // 在摄像机内可见
         }

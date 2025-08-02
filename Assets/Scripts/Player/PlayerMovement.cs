@@ -95,16 +95,20 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // 获取真实输入状态（无论是否使用模拟输入都获取，作为备用）
-        //KeyState realTempKeyJump = UpdateKeyState("Jump");
-        //KeyState realTempKeyDash = UpdateKeyState("Fire1");
-        //KeyState realTempKeyCrouch = UpdateKeyState("Fire2");
+        KeyState realTempKeyJump = UpdateKeyState("Jump");
+        KeyState realTempKeyDash = UpdateKeyState("Fire1");
+        KeyState realTempKeyCrouch = UpdateKeyState("Fire2");
+        
+        // 添加Celeste风格按键支持（Z跳跃，X冲刺）
+        KeyState zKeyJump = UpdateKeyStateDirect("z");
+        KeyState xKeyDash = UpdateKeyStateDirect("x");
 
         if (!useSimulatedInput)
         {
-            // 使用真实输入
-            //tempKeyJump = realTempKeyJump;
-            //tempKeyDash = realTempKeyDash;
-            //tempKeyCrouch = realTempKeyCrouch;
+            // 使用真实输入 - 优先使用Z和X键，如果没有则使用默认输入轴
+            tempKeyJump = (zKeyJump == KeyState.Held) ? zKeyJump : realTempKeyJump;
+            tempKeyDash = (xKeyDash == KeyState.Held) ? xKeyDash : realTempKeyDash;
+            tempKeyCrouch = realTempKeyCrouch;
             UpdateSimulatedKeyStates();
         }
         else
@@ -178,8 +182,8 @@ public class PlayerMovement : MonoBehaviour
         // 获取输入
         if (!useSimulatedInput)
         {
-           // dirX = Input.GetAxisRaw("Horizontal"); // 获取水平输入轴
-           // dirY = Input.GetAxisRaw("Vertical"); // 获取垂直输入轴
+            dirX = Input.GetAxisRaw("Horizontal"); // 获取水平输入轴
+            dirY = Input.GetAxisRaw("Vertical"); // 获取垂直输入轴
         }
         else
         {
@@ -676,6 +680,27 @@ public class PlayerMovement : MonoBehaviour
             {
                 key = KeyState.Off; // 保持关闭状态
             }
+        }
+
+        return key;
+    }
+
+    /// <summary>
+    /// 直接检测按键状态（不使用Input Manager）
+    /// </summary>
+    /// <param name="keyName">按键名称</param>
+    /// <returns>按键的当前状态</returns>
+    private KeyState UpdateKeyStateDirect(string keyName)
+    {
+        KeyState key;
+
+        if (Input.GetKey(keyName)) // 如果按键被按下
+        {
+            key = KeyState.Held; // 设置为按住状态
+        }
+        else // 如果按键未被按下
+        {
+            key = KeyState.Off; // 设置为关闭状态
         }
 
         return key;

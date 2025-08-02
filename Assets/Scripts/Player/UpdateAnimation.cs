@@ -35,6 +35,54 @@ public class UpdateAnimation : MonoBehaviour
         
         // 获取MovementCommand组件
         movementCommand = GetComponent<MovementCommand>();
+        
+        // 验证组件设置
+        ValidateComponents();
+    }
+
+    /// <summary>
+    /// 验证组件设置
+    /// </summary>
+    private void ValidateComponents()
+    {
+        if (rb == null)
+        {
+            Debug.LogError("UpdateAnimation: 缺少 Rigidbody2D 组件！");
+        }
+        
+        if (anim == null)
+        {
+            Debug.LogError("UpdateAnimation: 缺少 Animator 组件！");
+        }
+        else if (anim.runtimeAnimatorController == null)
+        {
+            Debug.LogError("UpdateAnimation: Animator 组件没有分配动画控制器！");
+        }
+        else
+        {
+            Debug.Log($"UpdateAnimation: 动画控制器已设置: {anim.runtimeAnimatorController.name}");
+            
+            // 检查动画参数
+            if (HasParameter("state", anim))
+            {
+                Debug.Log("UpdateAnimation: 'state' 参数存在，动画系统准备就绪");
+            }
+            else
+            {
+                Debug.LogError("UpdateAnimation: 动画控制器缺少 'state' 参数！");
+                Debug.LogError("请确保动画控制器包含名为 'state' 的整数参数");
+            }
+        }
+        
+        if (playerMovement == null)
+        {
+            Debug.LogError("UpdateAnimation: 缺少 PlayerMovement 组件！");
+        }
+        
+        if (sprite == null)
+        {
+            Debug.LogWarning("UpdateAnimation: 缺少 SpriteRenderer 组件！");
+        }
     }
 
     /// <summary>
@@ -45,6 +93,21 @@ public class UpdateAnimation : MonoBehaviour
         // 检查组件引用
         if (playerMovement == null || rb == null || anim == null)
         {
+            if (Time.frameCount % 60 == 0) // 每60帧输出一次错误信息
+            {
+                Debug.LogWarning($"UpdateAnimation: 缺少必要组件 - playerMovement: {playerMovement != null}, rb: {rb != null}, anim: {anim != null}");
+            }
+            return;
+        }
+        
+        // 检查动画控制器是否有state参数
+        if (!HasParameter("state", anim))
+        {
+            if (Time.frameCount % 60 == 0) // 每60帧输出一次错误信息
+            {
+                Debug.LogError($"UpdateAnimation: 动画控制器缺少 'state' 参数！请检查动画控制器设置。");
+                Debug.LogError($"当前动画控制器: {anim.runtimeAnimatorController?.name ?? "null"}");
+            }
             return;
         }
         
@@ -61,7 +124,15 @@ public class UpdateAnimation : MonoBehaviour
         // 更新动画状态
         UpdateAnimationState();
 
-        anim.SetInteger("state", (int)state); // 将动画状态传递给动画控制器
+        // 安全地设置动画参数
+        try
+        {
+            anim.SetInteger("state", (int)state); // 将动画状态传递给动画控制器
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"UpdateAnimation: 设置动画参数时出错: {e.Message}");
+        }
         
         // 调试信息
         if (Time.frameCount % 60 == 0) // 每60帧输出一次
@@ -123,5 +194,28 @@ public class UpdateAnimation : MonoBehaviour
         {
             Debug.Log($"指令执行中 - 动画状态: {state}");
         }
+    }
+
+    /// <summary>
+    /// 检查动画控制器是否有指定参数
+    /// </summary>
+    /// <param name="paramName">参数名称</param>
+    /// <param name="animator">动画控制器</param>
+    /// <returns>如果参数存在则返回true</returns>
+    private bool HasParameter(string paramName, Animator animator)
+    {
+        if (animator == null || animator.runtimeAnimatorController == null)
+        {
+            return false;
+        }
+
+        foreach (AnimatorControllerParameter param in animator.parameters)
+        {
+            if (param.name == paramName)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
